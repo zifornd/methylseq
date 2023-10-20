@@ -101,7 +101,6 @@ workflow METHYLSEQ {
                 return [ meta + [ single_end:false ], [ fastq_1, fastq_2 ] ]
             }
         }
-        .groupTuple()
         .map {
             meta, fastq ->
             def meta_clone = meta.clone()
