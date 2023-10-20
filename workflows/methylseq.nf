@@ -33,6 +33,12 @@ ch_multiqc_custom_methods_description = params.multiqc_methods_description ? fil
 */
 
 //
+// MODULE: Loaded from modules/local
+//
+include { TRIMGALORE_OVATION    } from '../modules/local/trimgalore_ovation'
+include { TRIMDIVERSITY_OVATION } from '../modules/local/trimdiversity_ovation'
+
+//
 // SUBWORKFLOWS: Consisting of a mix of local and nf-core/modules
 //
 include { PREPARE_GENOME } from '../subworkflows/local/prepare_genome'
@@ -131,18 +137,36 @@ workflow METHYLSEQ {
     )
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
-    /*
-     * MODULE: Run TrimGalore!
-     */
-    if (!params.skip_trimming) {
-        TRIMGALORE(ch_cat_fastq)
-        reads = TRIMGALORE.out.reads
-        ch_versions = ch_versions.mix(TRIMGALORE.out.versions.first())
+    if (params.ovation) {
+
+       /*
+        * MODULE: Run TrimGalore! with NuGen Ovation adapters
+        */
+        TRIMGALORE_OVATION(ch_cat_fastq)
+        reads = TRIMGALORE_OVATION.out.reads
+        ch_versions = ch_versions.mix(TRIMGALORE_OVATION.out.versions.first())
+
+       /*
+        * MODULE: Run trimRRBSdiversityAdaptCustomers.py
+        */
+        TRIMDIVERSITY_OVATION(reads)
+        reads = TRIMDIVERSITY_OVATION.out.reads
+        ch_versions = ch_versions.mix(TRIMDIVERSITY_OVATION.out.versions.first())
+
     } else {
-        reads = ch_cat_fastq
+
+       /*
+        * MODULE: Run TrimGalore!
+        */
+        if (!params.skip_trimming) {
+            TRIMGALORE(ch_cat_fastq)
+            reads = TRIMGALORE.out.reads
+            ch_versions = ch_versions.mix(TRIMGALORE.out.versions.first())
+        } else {
+            reads = ch_cat_fastq
+        }
+
     }
-
-
 
     /*
      * SUBWORKFLOW: Align reads, deduplicate and extract methylation with Bismark
@@ -219,8 +243,12 @@ workflow METHYLSEQ {
         ch_multiqc_files = ch_multiqc_files.mix(QUALIMAP_BAMQC.out.results.collect{ it[1] }.ifEmpty([]))
         ch_multiqc_files = ch_multiqc_files.mix(PRESEQ_LCEXTRAP.out.log.collect{ it[1] }.ifEmpty([]))
         ch_multiqc_files = ch_multiqc_files.mix(ch_aligner_mqc.ifEmpty([]))
-        if (!params.skip_trimming) {
-            ch_multiqc_files = ch_multiqc_files.mix(TRIMGALORE.out.log.collect{ it[1] })
+        if (params.ovation) {
+            ch_multiqc_files = ch_multiqc_files.mix(TRIMGALORE_OVATION.out.log.collect{ it[1] })
+        } else {
+            if (!params.skip_trimming) {
+                ch_multiqc_files = ch_multiqc_files.mix(TRIMGALORE.out.log.collect{ it[1] })
+            }
         }
         ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{ it[1] }.ifEmpty([]))
 
