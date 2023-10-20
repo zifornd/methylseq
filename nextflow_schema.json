@@ -224,6 +224,10 @@
                     "fa_icon": "fas fa-cut",
                     "description": "Trimming preset for the Zymo kit.",
                     "help_text": "Equivalent to `--clip_r1 10` `--clip_r2 10` `--three_prime_clip_r1 10` `--three_prime_clip_r2 10`.\n\nAlso sets the `--non_directional` flag for Bismark."
+                },
+                "ovation": {
+                    "type": "boolean",
+                    "description": "Trimming preset for the NuGen Ovation RRBS kit."
                 }
             },
             "fa_icon": "fas fa-prescription-bottle"
@@ -669,13 +673,13 @@
             "$ref": "#/definitions/skip_pipeline_steps"
         },
         {
-            "$ref": "#/definitions/generic_options"
+            "$ref": "#/definitions/institutional_config_options"
         },
         {
             "$ref": "#/definitions/max_job_request_options"
         },
         {
-            "$ref": "#/definitions/institutional_config_options"
+            "$ref": "#/definitions/generic_options"
         }
     ]
 }
